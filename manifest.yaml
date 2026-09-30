@@ -1,0 +1,35 @@
+manifestVersion: 1
+name: "@kneel/sig-distgit"
+version: "2026.09.29.1"
+description: "Read-only fan-out scan of a CentOS Cloud SIG dist-git group on gitlab.com: lists every project, fetches each <name>.spec at a branch, resolves its Version/Release/Epoch (expanding RDO %global upstream_version macros), reads the lookaside `sources` state, and persists per-package facts plus a scan-summary (scanned / missing-branch / unparsed counts)."
+
+repository: https://github.com/NeilHanlon/swamp-sig-distgit
+
+additionalFiles:
+  - README.md
+  - LICENSE.txt
+
+# sig_distgit.ts is the group-scoped model (one instance per SIG dist-git group).
+# It imports two pure library modules bundled with it — extensions/lib/spec_version.ts
+# (RPM Version/Release/Epoch + %global macro resolution) and
+# extensions/lib/spec_sources.ts (lookaside `sources` file parsing) — which are
+# not separately-registered model types.
+#
+# Runtime permissions: the scan is plain Deno `fetch` against gitlab.com and needs
+# `--allow-net`. An optional PAT (for higher rate limits / private groups) is read
+# from a global argument, not the environment.
+models:
+  - sig_distgit.ts
+
+platforms:
+  - linux-x86_64
+  - linux-aarch64
+  - darwin-x86_64
+  - darwin-aarch64
+
+labels:
+  - centos
+  - openstack
+  - rdo
+  - dist-git
+  - gitlab
