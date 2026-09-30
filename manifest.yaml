@@ -1,7 +1,7 @@
 manifestVersion: 1
 name: "@kneel/sig-distgit"
-version: "2026.09.29.1"
-description: "Read-only fan-out scan of a CentOS Cloud SIG dist-git group on gitlab.com: lists every project, fetches each <name>.spec at a branch, resolves its Version/Release/Epoch (expanding RDO %global upstream_version macros), reads the lookaside `sources` state, and persists per-package facts plus a scan-summary (scanned / missing-branch / unparsed counts)."
+version: "2026.09.29.2"
+description: "CentOS Cloud SIG dist-git tooling. The model is a read-only fan-out scan of a SIG dist-git group on gitlab.com: lists every project, fetches each <name>.spec at a branch, resolves its Version/Release/Epoch (expanding RDO %global upstream_version macros), reads the lookaside `sources` state, and persists per-package facts plus a scan-summary. Also ships the workflow-scope `sig-promote` report, which joins those spec versions with koji promotion-tag NVRs and upstream OpenStack releases into a per-package candidate→testing→release matrix with a build/promote action queue."
 
 repository: https://github.com/NeilHanlon/swamp-sig-distgit
 
@@ -20,6 +20,14 @@ additionalFiles:
 # from a global argument, not the environment.
 models:
   - sig_distgit.ts
+
+# The sig-promote report (workflow scope) joins this model's PackageFact output
+# with koji promotion-tag NVRs and upstream OpenStack releases. Its remaining pure
+# deps are bundled alongside: extensions/lib/{name_map,rpmvercmp}.ts (spec_sources.ts
+# is already vendored for the model); sanitizeMarkdown and the upstream
+# DeliverableEntry shape are inlined so the report needs no cross-extension source.
+reports:
+  - sig_promote.ts
 
 platforms:
   - linux-x86_64
