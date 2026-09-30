@@ -49,6 +49,7 @@ const GlobalArgsSchema = z.object({
   token: z
     .string()
     .default("")
+    .meta({ sensitive: true })
     .describe(
       "Optional PAT for rate-limit headroom — vault it, never a literal",
     ),
@@ -107,6 +108,9 @@ const ScanSummarySchema = z.object({
   group: z.string(),
   gitlabUrl: z.string(),
   authenticated: z.boolean(),
+  truncated: z.boolean().describe(
+    "True if the project listing hit the pagination page cap — the scan is partial",
+  ),
   totalProjects: z.number().int().describe("Projects listed in the group"),
   scanned: z.number().int().describe("Projects that had a spec at the branch"),
   missingBranch: z.number().int().describe(
@@ -525,6 +529,7 @@ export async function scanProjects(
 export function buildScanSummary(
   cfg: GlobalArgs,
   result: ScanResult,
+  truncated: boolean,
 ): z.infer<typeof ScanSummarySchema> {
   const unparsedPackages = result.packages
     .filter((p) => !p.resolved)
@@ -534,6 +539,7 @@ export function buildScanSummary(
     group: cfg.group,
     gitlabUrl: cfg.gitlabUrl,
     authenticated: !!cfg.token,
+    truncated,
     totalProjects: result.totalProjects,
     scanned: result.packages.length,
     missingBranch: result.missingBranch.length,
@@ -572,7 +578,7 @@ interface ExecuteResult {
 /** Read-only CentOS Cloud SIG distgit scan model. */
 export const model = {
   type: "@kneel/sig-distgit",
-  version: "2026.07.22.1",
+  version: "2026.09.29.1",
   description:
     "Read-only fan-out scan of a CentOS Cloud SIG distgit group on gitlab.com: " +
     "lists every project, fetches each <name>.spec at a branch, resolves its " +
@@ -607,9 +613,19 @@ export const model = {
       ): Promise<ExecuteResult> => {
         const cfg = context.globalArgs;
         const doFetch = args._fetch ?? (fetch as unknown as FetchLike);
-        const { projects } = await listProjects(cfg, doFetch, context.logger);
+        const { projects, truncated } = await listProjects(
+          cfg,
+          doFetch,
+          context.logger,
+        );
         const result = await scanProjects(cfg, projects, doFetch);
-        const summary = buildScanSummary(cfg, result);
+        const summary = buildScanSummary(cfg, result, truncated);
+        if (truncated) {
+          context.logger.warning(
+            "Project listing hit the page cap ({cap}) — scan-summary.truncated=true, results are partial",
+            { cap: MAX_PAGINATION_PAGES },
+          );
+        }
         context.logger.info(
           "Scanned {scanned}/{total}: {missing} missing-branch, {unparsed} unparsed, {errors} errors",
           {

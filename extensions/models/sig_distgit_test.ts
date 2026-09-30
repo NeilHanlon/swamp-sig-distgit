@@ -115,8 +115,10 @@ Deno.test("buildScanSummary: counts each bucket and lists unparsed raw lines", (
       missingBranch: ["rust-capn", "golang-x"],
       errorPackages: [{ distgit: "flaky", reason: "HTTP 500 err" }],
     },
+    false,
   );
   assertEquals(summary.totalProjects, 5);
+  assertEquals(summary.truncated, false);
   assertEquals(summary.scanned, 2);
   assertEquals(summary.missingBranch, 2);
   assertEquals(summary.unparsed, 1);

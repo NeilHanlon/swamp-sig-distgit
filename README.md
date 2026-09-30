@@ -26,8 +26,9 @@ swamp data get cloud-sig-epoxy scan-summary --json
 ```
 
 Global arguments (all optional; defaults target CentOS Cloud SIG / Epoxy):
-`group` (default `CentOS/cloud/rpms`), `branch` (default `c9s-sig-cloud-epoxy`),
-`host` (default `gitlab.com`), and an optional `token` for authenticated reads.
+`gitlabUrl` (default `https://gitlab.com`), `group` (default `CentOS/cloud/rpms`),
+`branch` (default `c9s-sig-cloud-epoxy`), `concurrency` (default 5), `maxProjects`
+(0 = no cap), and an optional `token` (vault it) for authenticated reads.
 
 ## Where it's used
 
